@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Student Lookup (Google Drive)</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    #rowData { margin-top: 20px; border: 1px solid #ccc; padding: 15px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    #message { margin-top: 10px; color: #b00; }
+    #info { margin-top: 10px; color: #333; font-size: 0.9em; }
+    button { margin-left: 10px; }
+  </style>
+</head>
+
+<body>
+
+<h2>Student Information Viewer</h2>
+
+<p>Type the student's name (case-insensitive):</p>
+<input type="text" id="studentInput" placeholder="Enter student name">
+<button id="searchBtn">Search</button>
+<button id="refreshBtn">Refresh Data</button>
+
+<div id="message"></div>
+<div id="info"></div>
+<div id="rowData"></div>
+
+<script>
+const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
+
+let excelData = [];
+
+// Load Excel from Google Drive
+function loadExcel() {
+  const messageDiv = document.getElementById("message");
+  const infoDiv = document.getElementById("info");
+  messageDiv.textContent = "Loading data...";
+  infoDiv.textContent = "";
+  excelData = [];
+
+  fetch(driveURL)
+    .then(res => res.arrayBuffer())
+    .then(buffer => {
+      let workbook = XLSX.read(buffer, { type: "array" });
+
+      console.log("SheetNames:", workbook.SheetNames);
+
+      // Load Sheet1 by name (lowercase comparison)
+      let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
+
+      if (!sheetName) {
+        sheetName = workbook.SheetNames[0];
+        messageDiv.textContent = 'Sheet1 not found; using first sheet: "' + sheetName + '"';
+      } else {
+        messageDiv.textContent = 'Using sheet: "' + sheetName + '"';
+      }
+
+      let sheet = workbook.Sheets[sheetName];
+      excelData = XLSX.utils.sheet_to_json(sheet);
+
+      // Debug info
+      infoDiv.innerHTML = "Rows loaded: " + excelData.length + "<br>";
+
+      let students = excelData
+        .map(r => r.Student)
+        .filter(s => s)
+        .slice(0, 10);
+
+      infoDiv.innerHTML += "First few Student values: " + 
+        (students.length ? students.join(", ") : "None found (check column header).");
+    })
+    .catch(err => {
+      messageDiv.textContent = "Error loading Excel file.";
+      console.error(err);
+    });
+}
+
+// Initial load
+loadExcel();
+
+// Refresh button
+document.getElementById("refreshBtn").addEventListener("click", function() {
+  loadExcel();
+});
+
+// Search button
+document.getElementById("searchBtn").addEventListener("click", function() {
+  let name = document.getElementById("studentInput").value.trim().toLowerCase();
+  let messageDiv = document.getElementById("message");
+  let rowDiv = document.getElementById("rowData");
+
+  messageDiv.textContent = "";
+  rowDiv.innerHTML = "";
+
+  if (!name) {
+    messageDiv.textContent = "Please enter a student name.";
+    return;
+  }
+
+  if (!excelData.length) {
+    messageDiv.textContent = "No data loaded yet. Click Refresh Data.";
+    return;
+  }
+
+  // Case-insensitive match
+  let row = excelData.find(r =>
+    String(r.Student || "").trim().toLowerCase() === name
+  );
+
+  if (!row) {
+    messageDiv.textContent = "No student found with that name.";
+    return;
+  }
+
+  let html = `
+    <h3>Student Details</h3>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Parent</td><td>${row.Parent || ""}</td></tr>
+      <tr><td>City</td><td>${row.City || ""}</td></tr>
+      <tr><td>Host</td><td>${row.Host || ""}</td></tr>
+      <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
+    </table>
+  `;
+
+  rowDiv.innerHTML = html;
+});
+</script>
+
+</body>
+</html>
