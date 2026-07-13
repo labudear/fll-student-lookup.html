@@ -64,15 +64,8 @@ function loadExcel() {
       excelData = XLSX.utils.sheet_to_json(sheet);
 
       // Debug info
-      infoDiv.innerHTML = "Rows loaded: " + excelData.length + "<br>";
+	infoDiv.innerHTML = "Rows loaded: " + excelData.length;
 
-      let students = excelData
-        .map(r => r.Student)
-        .filter(s => s)
-        .slice(0, 10);
-
-      infoDiv.innerHTML += "First few Student values: " + 
-        (students.length ? students.join(", ") : "None found (check column header).");
     })
     .catch(err => {
       messageDiv.textContent = "Error loading Excel file.";
