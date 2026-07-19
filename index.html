@@ -31,6 +31,8 @@
 <div id="rowData"></div>
 
 <script>
+// GitHub raw image base URL
+// Replace with your actual GitHub repo path
 const githubBase = "https://raw.githubusercontent.com/labudear/fll-student-lookup/main/images/";
 
 const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
@@ -50,9 +52,6 @@ function loadExcel() {
     .then(buffer => {
       let workbook = XLSX.read(buffer, { type: "array" });
 
-      console.log("SheetNames:", workbook.SheetNames);
-
-      // Load Sheet1 by name (lowercase comparison)
       let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
 
       if (!sheetName) {
@@ -65,8 +64,7 @@ function loadExcel() {
       let sheet = workbook.Sheets[sheetName];
       excelData = XLSX.utils.sheet_to_json(sheet);
 
-      // Debug info
-	infoDiv.innerHTML = "Rows loaded: " + excelData.length;
+      infoDiv.innerHTML = "Rows loaded: " + excelData.length;
 
     })
     .catch(err => {
@@ -102,7 +100,6 @@ document.getElementById("searchBtn").addEventListener("click", function() {
     return;
   }
 
-  // Case-insensitive match
   let row = excelData.find(r =>
     String(r.Student || "").trim().toLowerCase() === name
   );
@@ -112,6 +109,7 @@ document.getElementById("searchBtn").addEventListener("click", function() {
     return;
   }
 
+  // Build HTML with dynamic GitHub image
   let html = `
     <h3>Student Details</h3>
     <table>
@@ -120,18 +118,19 @@ document.getElementById("searchBtn").addEventListener("click", function() {
       <tr><td>City</td><td>${row.City || ""}</td></tr>
       <tr><td>Host</td><td>${row.Host || ""}</td></tr>
       <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
- //Add image to each team dynamically based on imagename column
-     <tr>
+
+      <tr>
         <td>Team</td>
         <td>
           ${row.Team || ""}
           ${row.imagename ? `
-            <img src="${githubBase + row.imagename}" 
-                 alt="Team Image" 
+            <img src="${githubBase + row.imagename}"
+                 alt="Team Image"
                  style="width:28px; height:28px; margin-left:10px; vertical-align:middle;">
           ` : ""}
         </td>
       </tr>
+
       <tr><td>Coach1</td><td>${row.Coach1 || ""}</td></tr>
       <tr><td>Coach2</td><td>${row.Coach2 || ""}</td></tr>
       <tr><td>Mentors</td><td>${row.Mentors || ""}</td></tr>
