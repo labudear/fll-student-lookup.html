@@ -31,6 +31,8 @@
 <div id="rowData"></div>
 
 <script>
+const githubBase = "https://raw.githubusercontent.com/labudear/fll-student-lookup/main/images/";
+
 const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
 
 let excelData = [];
@@ -118,10 +120,22 @@ document.getElementById("searchBtn").addEventListener("click", function() {
       <tr><td>City</td><td>${row.City || ""}</td></tr>
       <tr><td>Host</td><td>${row.Host || ""}</td></tr>
       <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
-      <tr><td>Team</td><td>${row.Team || ""}</td></tr>
+ //Add image to each team dynamically based on imagename column
+     <tr>
+        <td>Team</td>
+        <td>
+          ${row.Team || ""}
+          ${row.imagename ? `
+            <img src="${githubBase + row.imagename}" 
+                 alt="Team Image" 
+                 style="width:28px; height:28px; margin-left:10px; vertical-align:middle;">
+          ` : ""}
+        </td>
+      </tr>
       <tr><td>Coach1</td><td>${row.Coach1 || ""}</td></tr>
       <tr><td>Coach2</td><td>${row.Coach2 || ""}</td></tr>
       <tr><td>Mentors</td><td>${row.Mentors || ""}</td></tr>
+      <tr><td>Status</td><td>${row.Status || ""}</td></tr>
     </table>
   `;
 
