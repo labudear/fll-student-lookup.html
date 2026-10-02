@@ -7,13 +7,68 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-    body { font-family: Arial; margin: 30px; }
-    #rowData { margin-top: 20px; border: 1px solid #ccc; padding: 15px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; }
+    body { 
+      font-family: Arial; 
+      margin: 30px; 
+      background: #f2f2f2;
+    }
+
+    #rowData { 
+      margin-top: 20px; 
+      border: 1px solid #ccc; 
+      padding: 15px; 
+      background: #fff;
+      border-radius: 10px;
+    }
+
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 10px; 
+    }
+
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+    }
+
     #message { margin-top: 10px; color: #b00; }
     #info { margin-top: 10px; color: #333; font-size: 0.9em; }
     button { margin-left: 10px; }
+
+    /* Snack card styling */
+    .card {
+      max-width: 500px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    .week {
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 15px;
+      background: #f8f8f8;
+    }
+
+    .label {
+      font-size: 20px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .name {
+      font-size: 42px;
+      font-weight: bold;
+    }
+
+    #date {
+      color: #777;
+      margin-top: 25px;
+    }
   </style>
 </head>
 
@@ -47,7 +102,6 @@
 
 <script>
 // GitHub raw image base URL
-// Replace with your actual GitHub repo path
 const githubBase = "https://raw.githubusercontent.com/labudear/fll-student-lookup/main/";
 
 const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
@@ -68,19 +122,14 @@ function loadExcel() {
       let workbook = XLSX.read(buffer, { type: "array" });
 
       let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
-
-      if (!sheetName) {
-        sheetName = workbook.SheetNames[0];
-        messageDiv.textContent = 'Sheet1 not found; using first sheet: "' + sheetName + '"';
-      } else {
-        messageDiv.textContent = 'Using sheet: "' + sheetName + '"';
-      }
+      if (!sheetName) sheetName = workbook.SheetNames[0];
 
       let sheet = workbook.Sheets[sheetName];
       excelData = XLSX.utils.sheet_to_json(sheet);
 
       infoDiv.innerHTML = "Rows loaded: " + excelData.length;
 
+      updateSnackSchedule();  // ← IMPORTANT
     })
     .catch(err => {
       messageDiv.textContent = "Error loading Excel file.";
@@ -124,7 +173,6 @@ document.getElementById("searchBtn").addEventListener("click", function() {
     return;
   }
 
-  // Build HTML with dynamic GitHub image
   let html = `
     <h3>Student Details</h3>
     <table>
@@ -158,6 +206,7 @@ document.getElementById("searchBtn").addEventListener("click", function() {
 
   rowDiv.innerHTML = html;
 });
+
 // Weekly Snack Provider logic (dynamic from Excel)
 function updateSnackSchedule() {
   if (!excelData.length) return;
@@ -165,7 +214,6 @@ function updateSnackSchedule() {
   // Filter rows where Grade (E:E) is not missing
   const validRows = excelData.filter(r => r.Grade && r.Team && r.Parent);
 
-  // Extract names from column D (Parent) and team from F (Team)
   const names = validRows.map(r => ({
     name: r.Parent,
     team: r.Team
@@ -188,7 +236,6 @@ function updateSnackSchedule() {
   const thisWeekIndex = ((currentWeek % names.length) + names.length) % names.length;
   const lastWeekIndex = (((currentWeek - 1) % names.length) + names.length) % names.length;
 
-  // Display names and teams
   document.getElementById("thisWeek").textContent =
     `${names[thisWeekIndex].name} (${names[thisWeekIndex].team})`;
 
@@ -199,34 +246,7 @@ function updateSnackSchedule() {
     "Today: " + today.toLocaleDateString();
 }
 
-// Call after Excel loads
-function loadExcel() {
-  const messageDiv = document.getElementById("message");
-  const infoDiv = document.getElementById("info");
-  messageDiv.textContent = "Loading data...";
-  infoDiv.textContent = "";
-  excelData = [];
-
-  fetch(driveURL)
-    .then(res => res.arrayBuffer())
-    .then(buffer => {
-      let workbook = XLSX.read(buffer, { type: "array" });
-      let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
-      if (!sheetName) sheetName = workbook.SheetNames[0];
-      let sheet = workbook.Sheets[sheetName];
-      excelData = XLSX.utils.sheet_to_json(sheet);
-      infoDiv.innerHTML = "Rows loaded: " + excelData.length;
-
-      // Update snack schedule dynamically
-      updateSnackSchedule();
-    })
-    .catch(err => {
-      messageDiv.textContent = "Error loading Excel file.";
-      console.error(err);
-    });
-}
-  </script>
+</script>
 
 </body>
 </html>
-
