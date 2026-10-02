@@ -61,8 +61,9 @@
     }
 
     .name {
-      font-size: 42px;
+      font-size: 32px;
       font-weight: bold;
+      line-height: 1.3;
     }
 
     #date {
@@ -103,7 +104,6 @@
 <script>
 // GitHub raw image base URL
 const githubBase = "https://raw.githubusercontent.com/labudear/fll-student-lookup/main/";
-
 const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
 
 let excelData = [];
@@ -120,16 +120,12 @@ function loadExcel() {
     .then(res => res.arrayBuffer())
     .then(buffer => {
       let workbook = XLSX.read(buffer, { type: "array" });
-
       let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
       if (!sheetName) sheetName = workbook.SheetNames[0];
-
       let sheet = workbook.Sheets[sheetName];
       excelData = XLSX.utils.sheet_to_json(sheet);
-
       infoDiv.innerHTML = "Rows loaded: " + excelData.length;
-
-      updateSnackSchedule();  // ← IMPORTANT
+      updateSnackSchedule();  // update after load
     })
     .catch(err => {
       messageDiv.textContent = "Error loading Excel file.";
@@ -141,9 +137,7 @@ function loadExcel() {
 loadExcel();
 
 // Refresh button
-document.getElementById("refreshBtn").addEventListener("click", function() {
-  loadExcel();
-});
+document.getElementById("refreshBtn").addEventListener("click", loadExcel);
 
 // Search button
 document.getElementById("searchBtn").addEventListener("click", function() {
@@ -181,29 +175,10 @@ document.getElementById("searchBtn").addEventListener("click", function() {
       <tr><td>City</td><td>${row.City || ""}</td></tr>
       <tr><td>Host</td><td>${row.Host || ""}</td></tr>
       <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
-
-      <tr>
-        <td>Team</td>
-        <td>
-          ${row.Team || ""}
-          ${row.Imagename ? `
-            <img src="${githubBase + row.Imagename}"
-                 alt="Team Image"
-                 style="width:100px; height:100px; margin-left:10px; vertical-align:middle;">
-          ` : ""}
-        </td>
-      </tr>
-
-      <tr><td>TeamNumber</td><td>${row.TeamNumber || ""}</td></tr>
-      <tr><td>Coach1</td><td>${row.Coach1 || ""}</td></tr>
-      <tr><td>Coach2</td><td>${row.Coach2 || ""}</td></tr>
-      <tr><td>Mentors</td><td>${row.Mentors || ""}</td></tr>
-      <tr><td>Status</td><td>${row.Status || ""}</td></tr>
-      <tr><td>Schedule</td><td>${row.Schedule || ""}</td></tr>
-      <tr><td>ClassAddress</td><td>${row.ClassAddress || ""}</td></tr>
+      <tr><td>Team</td><td>${row.Team || ""}</td></tr>
+      <tr><td>SnackSchedule</td><td>${row.SnackSchedule || ""}</td></tr>
     </table>
   `;
-
   rowDiv.innerHTML = html;
 });
 
@@ -237,7 +212,6 @@ function updateSnackSchedule() {
   const daysPassed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
   const currentWeek = Math.floor(daysPassed / 7);
 
-  // Determine which team is active this week
   const thisTeamIndex = ((currentWeek % teams.length) + teams.length) % teams.length;
   const lastTeamIndex = (((currentWeek - 1) % teams.length) + teams.length) % teams.length;
 
