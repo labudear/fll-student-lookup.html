@@ -207,39 +207,29 @@ document.getElementById("searchBtn").addEventListener("click", function() {
   rowDiv.innerHTML = html;
 });
 
-// Weekly Snack Provider logic (Team in Column F, Provider in Column O)
+// Weekly Snack Provider logic (Team in F, Provider in O)
 function updateSnackSchedule() {
   if (!excelData.length) return;
 
-  // Step 1: Build list of unique teams from Column F
-  const uniqueTeams = [...new Set(
-    excelData
-      .map(r => r.Team)
-      .filter(x => x && x.trim() !== "")
-  )];
+  // Step 1: Group providers by team
+  const teamMap = {};
+  excelData.forEach(r => {
+    const team = r.Team?.trim();
+    const provider = r.SnackSchedule?.trim();
+    if (team && provider) {
+      if (!teamMap[team]) teamMap[team] = [];
+      teamMap[team].push(provider);
+    }
+  });
 
-  if (!uniqueTeams.length) {
+  const teams = Object.keys(teamMap);
+  if (!teams.length) {
     document.getElementById("thisWeek").textContent = "No teams found";
     document.getElementById("lastWeek").textContent = "";
     return;
   }
 
-  // Step 2: Build map: team → snack provider (Column O)
-  const teamProviderMap = {};
-
-  excelData.forEach(r => {
-    if (r.Team && r.SnackSchedule && !teamProviderMap[r.Team]) {
-      teamProviderMap[r.Team] = r.SnackSchedule;
-    }
-  });
-
-  // Step 3: Build final rotation list: [{team, provider}]
-  const rotation = uniqueTeams.map(team => ({
-    team: team,
-    provider: teamProviderMap[team] || "No Provider"
-  }));
-
-  // Step 4: Weekly rotation math
+  // Step 2: Weekly rotation by team
   const startDate = new Date("2026-10-01T00:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -247,20 +237,28 @@ function updateSnackSchedule() {
   const daysPassed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
   const currentWeek = Math.floor(daysPassed / 7);
 
-  const thisWeekIndex = ((currentWeek % rotation.length) + rotation.length) % rotation.length;
-  const lastWeekIndex = (((currentWeek - 1) % rotation.length) + rotation.length) % rotation.length;
+  // Determine which team is active this week
+  const thisTeamIndex = ((currentWeek % teams.length) + teams.length) % teams.length;
+  const lastTeamIndex = (((currentWeek - 1) % teams.length) + teams.length) % teams.length;
 
-  // Step 5: Display results
-  document.getElementById("thisWeek").textContent =
-    `${rotation[thisWeekIndex].team} — ${rotation[thisWeekIndex].provider}`;
+  const thisTeam = teams[thisTeamIndex];
+  const lastTeam = teams[lastTeamIndex];
 
-  document.getElementById("lastWeek").textContent =
-    `${rotation[lastWeekIndex].team} — ${rotation[lastWeekIndex].provider}`;
+  // Step 3: Rotate providers within each team
+  const thisProviders = teamMap[thisTeam];
+  const lastProviders = teamMap[lastTeam];
 
-  document.getElementById("date").textContent =
-    "Today: " + today.toLocaleDateString();
+  const thisProviderIndex = ((currentWeek % thisProviders.length) + thisProviders.length) % thisProviders.length;
+  const lastProviderIndex = (((currentWeek - 1) % lastProviders.length) + lastProviders.length) % lastProviders.length;
+
+  const thisProvider = thisProviders[thisProviderIndex];
+  const lastProvider = lastProviders[lastProviderIndex];
+
+  // Step 4: Display results
+  document.getElementById("thisWeek").textContent = `${thisTeam} — ${thisProvider}`;
+  document.getElementById("lastWeek").textContent = `${lastTeam} — ${lastProvider}`;
+  document.getElementById("date").textContent = "Today: " + today.toLocaleDateString();
 }
-
 </script>
 
 </body>
