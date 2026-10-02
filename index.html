@@ -229,10 +229,16 @@ function updateSnackSchedule() {
   const thisProvider = thisProviders[thisProviderIndex];
   const lastProvider = lastProviders[lastProviderIndex];
 
-  // Step 4: Display results
-  document.getElementById("thisWeek").textContent = `${thisTeam} — ${thisProvider}`;
-  document.getElementById("lastWeek").textContent = `${lastTeam} — ${lastProvider}`;
-  document.getElementById("date").textContent = "Today: " + today.toLocaleDateString();
+  // Step 4: Display results in snack card only (does not overwrite student info)
+  const thisWeekDiv = document.getElementById("thisWeek");
+  const lastWeekDiv = document.getElementById("lastWeek");
+  const dateDiv = document.getElementById("date");
+
+  if (thisWeekDiv && lastWeekDiv && dateDiv) {
+    thisWeekDiv.textContent = `${thisTeam} — ${thisProvider}`;
+    lastWeekDiv.textContent = `${lastTeam} — ${lastProvider}`;
+    dateDiv.textContent = "Today: " + today.toLocaleDateString();
+  }
 }
 </script>
 
