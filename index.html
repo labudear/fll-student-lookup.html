@@ -211,7 +211,7 @@ document.getElementById("searchBtn").addEventListener("click", function() {
 function updateSnackSchedule() {
   if (!excelData.length) return;
 
-  // Step 1: Group providers by team
+  // Step 1: Group snack providers by team
   const teamMap = {};
   excelData.forEach(r => {
     const team = r.Team?.trim();
