@@ -143,7 +143,75 @@ document.getElementById("searchBtn").addEventListener("click", function() {
 
   rowDiv.innerHTML = html;
 });
-</script>
+// Weekly Snack Provider logic (dynamic from Excel)
+function updateSnackSchedule() {
+  if (!excelData.length) return;
+
+  // Filter rows where Grade (E:E) is not missing
+  const validRows = excelData.filter(r => r.Grade && r.Team && r.Parent);
+
+  // Extract names from column D (Parent) and team from F (Team)
+  const names = validRows.map(r => ({
+    name: r.Parent,
+    team: r.Team
+  }));
+
+  if (!names.length) {
+    document.getElementById("thisWeek").textContent = "No valid data";
+    document.getElementById("lastWeek").textContent = "";
+    return;
+  }
+
+  // Cycle starts October 1, 2026
+  const startDate = new Date("2026-10-01T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const daysPassed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+  const currentWeek = Math.floor(daysPassed / 7);
+
+  const thisWeekIndex = ((currentWeek % names.length) + names.length) % names.length;
+  const lastWeekIndex = (((currentWeek - 1) % names.length) + names.length) % names.length;
+
+  // Display names and teams
+  document.getElementById("thisWeek").textContent =
+    `${names[thisWeekIndex].name} (${names[thisWeekIndex].team})`;
+
+  document.getElementById("lastWeek").textContent =
+    `${names[lastWeekIndex].name} (${names[lastWeekIndex].team})`;
+
+  document.getElementById("date").textContent =
+    "Today: " + today.toLocaleDateString();
+}
+
+// Call after Excel loads
+function loadExcel() {
+  const messageDiv = document.getElementById("message");
+  const infoDiv = document.getElementById("info");
+  messageDiv.textContent = "Loading data...";
+  infoDiv.textContent = "";
+  excelData = [];
+
+  fetch(driveURL)
+    .then(res => res.arrayBuffer())
+    .then(buffer => {
+      let workbook = XLSX.read(buffer, { type: "array" });
+      let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
+      if (!sheetName) sheetName = workbook.SheetNames[0];
+      let sheet = workbook.Sheets[sheetName];
+      excelData = XLSX.utils.sheet_to_json(sheet);
+      infoDiv.innerHTML = "Rows loaded: " + excelData.length;
+
+      // Update snack schedule dynamically
+      updateSnackSchedule();
+    })
+    .catch(err => {
+      messageDiv.textContent = "Error loading Excel file.";
+      console.error(err);
+    });
+}
+  </script>
 
 </body>
 </html>
+
