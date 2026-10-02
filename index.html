@@ -7,11 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-    body { 
-      font-family: Arial; 
-      margin: 30px; 
-      background: #f2f2f2;
-    }
+    body { font-family: Arial; margin: 30px; background: f2f2f2; }
 
     #rowData { 
       margin-top: 20px; 
@@ -175,6 +171,26 @@ document.getElementById("searchBtn").addEventListener("click", function() {
       <tr><td>Host</td><td>${row.Host || ""}</td></tr>
       <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
       <tr><td>Team</td><td>${row.Team || ""}</td></tr>
+
+     <tr>
+        <td>Team</td>
+        <td>
+          ${row.Team || ""}
+          ${row.Imagename ? `
+            <img src="${githubBase + row.Imagename}"
+                 alt="Team Image"
+                 style="width:100px; height:100px; margin-left:10px; vertical-align:middle;">
+          ` : ""}
+        </td>
+      </tr>
+
+      <tr><td>TeamNumber</td><td>${row.TeamNumber || ""}</td></tr>
+      <tr><td>Coach1</td><td>${row.Coach1 || ""}</td></tr>
+      <tr><td>Coach2</td><td>${row.Coach2 || ""}</td></tr>
+      <tr><td>Mentors</td><td>${row.Mentors || ""}</td></tr>
+      <tr><td>Status</td><td>${row.Status || ""}</td></tr>
+      <tr><td>Schedule</td><td>${row.Schedule || ""}</td></tr>
+      <tr><td>ClassAddress</td><td>${row.ClassAddress || ""}</td></tr>
     </table>
   `;
   rowDiv.innerHTML = html;
