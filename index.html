@@ -7,69 +7,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-    body { 
-      font-family: Arial; 
-      margin: 30px; 
-      background: #f2f2f2;
-    }
-
-    #rowData { 
-      margin-top: 20px; 
-      border: 1px solid #ccc; 
-      padding: 15px; 
-      background: #fff;
-      border-radius: 10px;
-    }
-
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin-top: 10px; 
-    }
-
-    th, td { 
-      border: 1px solid #ccc; 
-      padding: 8px; 
-    }
-
+    body { font-family: Arial; margin: 30px; }
+    #rowData { margin-top: 20px; border: 1px solid #ccc; padding: 15px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
     #message { margin-top: 10px; color: #b00; }
     #info { margin-top: 10px; color: #333; font-size: 0.9em; }
     button { margin-left: 10px; }
-
-    /* Snack card styling */
-    .card {
-      max-width: 500px;
-      margin: 40px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-
-    .week {
-      margin: 20px 0;
-      padding: 20px;
-      border-radius: 15px;
-      background: #f8f8f8;
-    }
-
-    .label {
-      font-size: 20px;
-      color: #555;
-      margin-bottom: 10px;
-    }
-
-    .name {
-      font-size: 32px;
-      font-weight: bold;
-      line-height: 1.3;
-    }
-
-    #date {
-      color: #777;
-      margin-top: 25px;
-    }
   </style>
 </head>
 
@@ -86,24 +30,11 @@
 <div id="info"></div>
 <div id="rowData"></div>
 
-<!-- Weekly Snack Provider Card -->
-<div class="card">
-  <div class="week">
-    <div class="label">Last Week's Snack Provider</div>
-    <div class="name" id="lastWeek"></div>
-  </div>
-
-  <div class="week">
-    <div class="label">This Week's Snack Provider</div>
-    <div class="name" id="thisWeek"></div>
-  </div>
-
-  <div id="date"></div>
-</div>
-
 <script>
 // GitHub raw image base URL
+// Replace with your actual GitHub repo path
 const githubBase = "https://raw.githubusercontent.com/labudear/fll-student-lookup/main/";
+
 const driveURL = "https://docs.google.com/spreadsheets/d/1DF7ZBAfByHIIY-gyTHCBRwXx52Wt-QDB/export?format=xlsx";
 
 let excelData = [];
@@ -120,11 +51,21 @@ function loadExcel() {
     .then(res => res.arrayBuffer())
     .then(buffer => {
       let workbook = XLSX.read(buffer, { type: "array" });
+
       let sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === "sheet1");
-      if (!sheetName) sheetName = workbook.SheetNames[0];
+
+      if (!sheetName) {
+        sheetName = workbook.SheetNames[0];
+        messageDiv.textContent = 'Sheet1 not found; using first sheet: "' + sheetName + '"';
+      } else {
+        messageDiv.textContent = 'Using sheet: "' + sheetName + '"';
+      }
+
       let sheet = workbook.Sheets[sheetName];
       excelData = XLSX.utils.sheet_to_json(sheet);
+
       infoDiv.innerHTML = "Rows loaded: " + excelData.length;
+
     })
     .catch(err => {
       messageDiv.textContent = "Error loading Excel file.";
@@ -136,7 +77,9 @@ function loadExcel() {
 loadExcel();
 
 // Refresh button
-document.getElementById("refreshBtn").addEventListener("click", loadExcel);
+document.getElementById("refreshBtn").addEventListener("click", function() {
+  loadExcel();
+});
 
 // Search button
 document.getElementById("searchBtn").addEventListener("click", function() {
@@ -166,6 +109,7 @@ document.getElementById("searchBtn").addEventListener("click", function() {
     return;
   }
 
+  // Build HTML with dynamic GitHub image
   let html = `
     <h3>Student Details</h3>
     <table>
@@ -174,14 +118,30 @@ document.getElementById("searchBtn").addEventListener("click", function() {
       <tr><td>City</td><td>${row.City || ""}</td></tr>
       <tr><td>Host</td><td>${row.Host || ""}</td></tr>
       <tr><td>Grade</td><td>${row.Grade || ""}</td></tr>
-      <tr><td>Team</td><td>${row.Team || ""}</td></tr>
-      <tr><td>SnackSchedule</td><td>${row.SnackSchedule || ""}</td></tr>
+
+      <tr>
+        <td>Team</td>
+        <td>
+          ${row.Team || ""}
+          ${row.Imagename ? `
+            <img src="${githubBase + row.Imagename}"
+                 alt="Team Image"
+                 style="width:100px; height:100px; margin-left:10px; vertical-align:middle;">
+          ` : ""}
+        </td>
+      </tr>
+
+      <tr><td>TeamNumber</td><td>${row.TeamNumber || ""}</td></tr>
+      <tr><td>Coach1</td><td>${row.Coach1 || ""}</td></tr>
+      <tr><td>Coach2</td><td>${row.Coach2 || ""}</td></tr>
+      <tr><td>Mentors</td><td>${row.Mentors || ""}</td></tr>
+      <tr><td>Status</td><td>${row.Status || ""}</td></tr>
+      <tr><td>Schedule</td><td>${row.Schedule || ""}</td></tr>
+      <tr><td>ClassAddress</td><td>${row.ClassAddress || ""}</td></tr>
     </table>
   `;
-  rowDiv.innerHTML = html;
 
-  // Show snack schedule for this student's team
-  updateSnackSchedule(row.Team);
+  rowDiv.innerHTML = html;
 });
 
 // Weekly Snack Provider logic using FIXED team lists
