@@ -125,7 +125,6 @@ function loadExcel() {
       let sheet = workbook.Sheets[sheetName];
       excelData = XLSX.utils.sheet_to_json(sheet);
       infoDiv.innerHTML = "Rows loaded: " + excelData.length;
-      updateSnackSchedule();  // update after load
     })
     .catch(err => {
       messageDiv.textContent = "Error loading Excel file.";
@@ -180,31 +179,43 @@ document.getElementById("searchBtn").addEventListener("click", function() {
     </table>
   `;
   rowDiv.innerHTML = html;
+
+  // Show snack schedule for this student's team
+  updateSnackSchedule(row.Team);
 });
 
-// Weekly Snack Provider logic (Team in F, Provider in O)
-function updateSnackSchedule() {
-  if (!excelData.length) return;
+// Weekly Snack Provider logic using FIXED team lists
+function updateSnackSchedule(studentTeam) {
 
-  // Step 1: Group snack providers by team
-  const teamMap = {};
-  excelData.forEach(r => {
-    const team = r.Team?.trim();
-    const provider = r.SnackSchedule?.trim();
-    if (team && provider) {
-      if (!teamMap[team]) teamMap[team] = [];
-      teamMap[team].push(provider);
-    }
-  });
+  // Step 1: Hard-coded provider lists by team (from your message)
+  const providerLists = {
+    "Explore-1 (Himalayan Robotics)": [
+      "Ram", "Shyam", "Hari", "Gopal", "Ganesh"
+    ],
+    "Explore-2 (Kopila Robotics)": [
+      "Gopal", "Hari", "Shyam", "Krishna", "Ram", "Ganesh"
+    ],
+    "Explore-3 (Everest Robotics)": [
+      "A", "Shyam", "d", "f", "g", "Hari"
+    ],
+    "Challenge-1 (Rhino Robotics)": [
+      "w", "Ram", "t", "y", "u", "Krishna", "Ganesh"
+    ],
+    "Challenge-2 (Yeti Robotics)": [
+      "t", "y", "Shyam", "d", "f", "g", "t"
+    ]
+  };
 
-  const teams = Object.keys(teamMap);
-  if (!teams.length) {
-    document.getElementById("thisWeek").textContent = "No teams found";
+  // Step 2: Get provider list for the student's team
+  const providers = providerLists[studentTeam];
+
+  if (!providers) {
+    document.getElementById("thisWeek").textContent = "No provider list found";
     document.getElementById("lastWeek").textContent = "";
     return;
   }
 
-  // Step 2: Weekly rotation by team
+  // Step 3: Weekly rotation math
   const startDate = new Date("2026-10-01T00:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -212,34 +223,18 @@ function updateSnackSchedule() {
   const daysPassed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
   const currentWeek = Math.floor(daysPassed / 7);
 
-  // Determine which team is active this week
-  const thisTeamIndex = ((currentWeek % teams.length) + teams.length) % teams.length;
-  const lastTeamIndex = (((currentWeek - 1) % teams.length) + teams.length) % teams.length;
+  const thisIndex = ((currentWeek % providers.length) + providers.length) % providers.length;
+  const lastIndex = (((currentWeek - 1) % providers.length) + providers.length) % providers.length;
 
-  const thisTeam = teams[thisTeamIndex];
-  const lastTeam = teams[lastTeamIndex];
+  const thisProvider = providers[thisIndex];
+  const lastProvider = providers[lastIndex];
 
-  // Step 3: Rotate providers within each team
-  const thisProviders = teamMap[thisTeam];
-  const lastProviders = teamMap[lastTeam];
-
-  const thisProviderIndex = ((currentWeek % thisProviders.length) + thisProviders.length) % thisProviders.length;
-  const lastProviderIndex = (((currentWeek - 1) % lastProviders.length) + lastProviders.length) % lastProviders.length;
-
-  const thisProvider = thisProviders[thisProviderIndex];
-  const lastProvider = lastProviders[lastProviderIndex];
-
-  // Step 4: Display results in snack card only (does not overwrite student info)
-  const thisWeekDiv = document.getElementById("thisWeek");
-  const lastWeekDiv = document.getElementById("lastWeek");
-  const dateDiv = document.getElementById("date");
-
-  if (thisWeekDiv && lastWeekDiv && dateDiv) {
-    thisWeekDiv.textContent = `${thisTeam} — ${thisProvider}`;
-    lastWeekDiv.textContent = `${lastTeam} — ${lastProvider}`;
-    dateDiv.textContent = "Today: " + today.toLocaleDateString();
-  }
+  // Step 4: Display results
+  document.getElementById("thisWeek").textContent = `${studentTeam} — ${thisProvider}`;
+  document.getElementById("lastWeek").textContent = `${studentTeam} — ${lastProvider}`;
+  document.getElementById("date").textContent = "Today: " + today.toLocaleDateString();
 }
+
 </script>
 
 </body>
