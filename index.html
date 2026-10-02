@@ -207,22 +207,39 @@ document.getElementById("searchBtn").addEventListener("click", function() {
   rowDiv.innerHTML = html;
 });
 
-// Weekly Snack Provider logic (Column O controls the rotation)
+// Weekly Snack Provider logic (Team in Column F, Provider in Column O)
 function updateSnackSchedule() {
   if (!excelData.length) return;
 
-  // Column O contains the snack schedule
-  const scheduleList = excelData
-    .map(r => r.SnackSchedule)   // Column O header must be "SnackSchedule"
-    .filter(x => x && x.trim() !== "");  // remove blanks
+  // Step 1: Build list of unique teams from Column F
+  const uniqueTeams = [...new Set(
+    excelData
+      .map(r => r.Team)
+      .filter(x => x && x.trim() !== "")
+  )];
 
-  if (!scheduleList.length) {
-    document.getElementById("thisWeek").textContent = "No snack schedule found";
+  if (!uniqueTeams.length) {
+    document.getElementById("thisWeek").textContent = "No teams found";
     document.getElementById("lastWeek").textContent = "";
     return;
   }
 
-  // Cycle starts October 1, 2026
+  // Step 2: Build map: team → snack provider (Column O)
+  const teamProviderMap = {};
+
+  excelData.forEach(r => {
+    if (r.Team && r.SnackSchedule && !teamProviderMap[r.Team]) {
+      teamProviderMap[r.Team] = r.SnackSchedule;
+    }
+  });
+
+  // Step 3: Build final rotation list: [{team, provider}]
+  const rotation = uniqueTeams.map(team => ({
+    team: team,
+    provider: teamProviderMap[team] || "No Provider"
+  }));
+
+  // Step 4: Weekly rotation math
   const startDate = new Date("2026-10-01T00:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -230,15 +247,15 @@ function updateSnackSchedule() {
   const daysPassed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
   const currentWeek = Math.floor(daysPassed / 7);
 
-  const thisWeekIndex =
-    ((currentWeek % scheduleList.length) + scheduleList.length) % scheduleList.length;
+  const thisWeekIndex = ((currentWeek % rotation.length) + rotation.length) % rotation.length;
+  const lastWeekIndex = (((currentWeek - 1) % rotation.length) + rotation.length) % rotation.length;
 
-  const lastWeekIndex =
-    (((currentWeek - 1) % scheduleList.length) + scheduleList.length) % scheduleList.length;
+  // Step 5: Display results
+  document.getElementById("thisWeek").textContent =
+    `${rotation[thisWeekIndex].team} — ${rotation[thisWeekIndex].provider}`;
 
-  // Display names exactly as stored in Column O
-  document.getElementById("thisWeek").textContent = scheduleList[thisWeekIndex];
-  document.getElementById("lastWeek").textContent = scheduleList[lastWeekIndex];
+  document.getElementById("lastWeek").textContent =
+    `${rotation[lastWeekIndex].team} — ${rotation[lastWeekIndex].provider}`;
 
   document.getElementById("date").textContent =
     "Today: " + today.toLocaleDateString();
